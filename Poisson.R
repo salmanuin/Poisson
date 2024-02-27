@@ -1,58 +1,42 @@
-install.packages("DescTools")
-library(DescTools)
-CHD.data<-matrix(c(178, 1411, 79, 1486), nrow=2, ncol=2, byrow=T)
-dimnames(CHD.data)<-list(Factor=c("Type-A", "Type-B"),
-                         Event=c("CHD", "No CHD"))
+rm(list=ls())
+install.packages("MASS")
+install.packages("car")
+install.packages("pscl")
+install.packages("ggplot2")
+install.packages("boot")
+install.packages("AER")
+install.packages("fitdistrplus")
+install.packages("performance")
+install.packages("randomForest")
+install.packages("VGAM")
+install.packages("DT")
+install.packages("car")
+library(MASS)
+library(car)
+library(pscl)
+library(ggplot2)
+library(boot)
+library(AER)
+library(fitdistrplus)
+library(performance)
+library(randomForest)
+library(VGAM)
+library(DT) 
+library(car)
+data =read.delim("clipboard")
+str(data)
+model = lm(Y~., data = data)
+vif(model)
 
-print(CHD.data)
-RelRisk(CHD.data, conf.level = 0.95)
+#Regresi Poisson
+m<- glm(Y~X1+X2+X3+X4+X5+X6, family="poisson", data=data)
+summary(m)
+check_overdispersion(m)
 
-Total<-rowSums(CHD.data)
-CHD.df<-as.data.frame.table(CHD.data)
-print(CHD.df)
+#Regresi binomial negatif
+m2<- glm.nb(Y~X1+X2+X3+X4+X5+X6, data=data)
+summary(m2)
 
-CHD.df<-CHD.df[1:2,]
-CHD.df$Total<-Total
-CHD.df
-
-coba<-CHD.df
-CHD.df<-within(CHD.df, Factor <- relevel(Factor, ref = 2))
-
-
-regpois<-glm(Freq~Factor,offset=log(Total),family=poisson(link="log"), data=CHD.df)
-summary(regpois)
-
-exp(regpois$coefficients[2])
-
-exp(coef(regpois)[1])
-
-exp(coef(regpois)[1]+coef(regpois)[2])
-
-CHD.smoking<-read.csv("https://raw.githubusercontent.com/raoy/data/master/chd%20smoking.csv")
-
-CHD.smoking$Smoking<-as.factor(CHD.smoking$Smoking)
-CHD.smoking$Factor<-as.factor(CHD.smoking$Factor)
-
-CHD.smoking <- within(CHD.smoking, Smoking <- relevel(Smoking, ref = 4))
-CHD.smoking <- within(CHD.smoking, Factor <- relevel(Factor, ref = 2))
-
-
-levels(CHD.smoking$Factor)
-
-levels(CHD.smoking$Smoking)
-
-CHD.smoking
-
-regpois2<-glm(CHD~Factor+Smoking,offset=log(Total),family=poisson(link="log"), data=CHD.smoking)
-
-
-summary(regpois2)
-
-pred<-predict(regpois2, type="response")
-df.pred<-data.frame(CHD=CHD.smoking$CHD, "CHD-pred"=pred)
-
-df.pred
-
-with(regpois2, cbind(res.deviance = deviance, df = df.residual,
-                     p = pchisq(deviance, df.residual, lower.tail=FALSE)))
-
+#Membandingkan model
+model_performance(m,metrics = "all")
+model_performance(m2,metrics = "all")
